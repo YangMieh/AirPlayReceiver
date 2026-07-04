@@ -3,6 +3,13 @@
 #include "FgUtf8Utils.h"
 #include <locale.h>
 
+// Lifecycle tracer to catch AirPlay video-mode switch / disconnect around the YouTube crash.
+static void TraceCb(const char* fmt, const char* a, const char* b)
+{
+    FILE* lf = NULL; fopen_s(&lf, "airplay_debug.log", "a");
+    if (lf) { fprintf(lf, fmt, a ? a : "", b ? b : ""); fclose(lf); }
+}
+
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 
 CAirServerCallback::CAirServerCallback()
@@ -43,6 +50,7 @@ void CAirServerCallback::connected(const char* remoteName, const char* remoteDev
 }
 
 void CAirServerCallback::disconnected(const char* remoteName, const char* remoteDeviceId) {
+	TraceCb("CALLBACK disconnected: name=%s id=%s\n", remoteName, remoteDeviceId);
 	memset(m_chRemoteDeviceId, 0, 128);
 	printf("Client disconnected\n");
 
@@ -88,6 +96,7 @@ void CAirServerCallback::outputVideo(SFgVideoFrame* data, const char* remoteName
 
 void CAirServerCallback::videoPlay(char* url, double volume, double startPos)
 {
+	TraceCb("CALLBACK videoPlay (AirPlay VIDEO mode!) url=%s\n", url, NULL);
 	printf("Play: %s", url);
 }
 

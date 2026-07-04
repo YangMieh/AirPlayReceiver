@@ -3,6 +3,9 @@
 #include <malloc.h>  // For _aligned_malloc/_aligned_free
 #include <math.h>    // For powf() in volume conversion
 #include "CAutoLock.h"
+#include <SDL_syswm.h>
+#include <imm.h>
+#pragma comment(lib, "imm32.lib")
 
 // Windows Core Audio API for querying system audio device format
 #include <mmdeviceapi.h>
@@ -399,7 +402,7 @@ void CSDLPlayer::loopEvents()
 	SDL_Event event;
 
 	BOOL bEndLoop = FALSE;
-	bool bShowUI = m_imgui.IsOverlayVisible();
+	bool bShowUI = false;  // always start with the info panel hidden (toggle via toolbar/H)
 
 	EQualityPreset lastQualityPreset = (EQualityPreset)-1;  // Force initial preset application
 
@@ -528,6 +531,12 @@ void CSDLPlayer::loopEvents()
 							SDL_TEXTUREACCESS_STREAMING,
 							m_videoWidth, m_videoHeight);
 
+						{ FILE* lf = NULL; fopen_s(&lf, "airplay_debug.log", "a");
+						  if (lf) { fprintf(lf, "resize done: %dx%d tex=%p buf0=%p pitch=%u/%u/%u%s\n",
+						      m_videoWidth, m_videoHeight, (void*)m_videoTexture, (void*)m_yuvBuffer[0][0],
+						      m_yuvPitch[0], m_yuvPitch[1], m_yuvPitch[2],
+						      m_videoTexture ? "" : " TEXTURE_CREATE_FAILED"); fclose(lf); } }
+
 						m_bResizing = false;
 					}
 				}
@@ -596,6 +605,8 @@ void CSDLPlayer::loopEvents()
 				break;
 			}
 			case SDL_QUIT: {
+				{ FILE* lf = NULL; fopen_s(&lf, "airplay_debug.log", "a");
+				  if (lf) { fprintf(lf, ">>> SDL_QUIT received in event loop\n"); fclose(lf); } }
 				printf("Quit requested, quitting.\n");
 
 				// Save settings before shutdown
@@ -655,7 +666,7 @@ void CSDLPlayer::loopEvents()
 			switch (currentPreset) {
 			case QUALITY_GOOD:
 				SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-				m_targetFrameIntervalMs = 33.333;  // 30fps - maximum quality per frame
+				m_targetFrameIntervalMs = 16.667;  // 60fps + best scaling (highest quality)
 				break;
 			case QUALITY_BALANCED:
 				SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
@@ -738,6 +749,7 @@ void CSDLPlayer::loopEvents()
 
 		// 4. Render ImGui overlay on top
 		m_imgui.NewFrame();
+		m_imgui.RenderToolbar(&bShowUI, m_bFullscreen, !m_bCursorHidden);
 		if (m_bConnected) {
 			// Connected - show overlay with controls and video statistics
 			m_imgui.RenderOverlay(&bShowUI, m_serverName, m_bConnected, m_connectedDeviceName,
@@ -796,6 +808,9 @@ void CSDLPlayer::loopEvents()
 
 		// 5. Present (no VSync - immediate display for lowest latency)
 		SDL_RenderPresent(m_renderer);
+
+		// Toolbar fullscreen button (applied after present to avoid resizing mid-frame)
+		if (m_imgui.ConsumeToggleFullscreen()) { toggleFullscreen(); }
 
 		// 6. Accumulate performance metrics, write to circular buffer every 1 second
 		{
@@ -938,6 +953,11 @@ void CSDLPlayer::outputVideo(SFgVideoFrame* data)
 
 	// Check if video source dimensions changed
 	if ((int)data->width != m_videoWidth || (int)data->height != m_videoHeight) {
+		{ FILE* lf = NULL; fopen_s(&lf, "airplay_debug.log", "a");
+		  if (lf) { fprintf(lf, "outputVideo size change: %dx%d -> %ux%u pitch=%u/%u/%u dataLen=%u/%u/%u\n",
+		      m_videoWidth, m_videoHeight, data->width, data->height,
+		      data->pitch[0], data->pitch[1], data->pitch[2],
+		      data->dataLen[0], data->dataLen[1], data->dataLen[2]); fclose(lf); } }
 		m_evtVideoSizeChange.type = SDL_USEREVENT;
 		m_evtVideoSizeChange.user.type = SDL_USEREVENT;
 		m_evtVideoSizeChange.user.code = VIDEO_SIZE_CHANGED_CODE;
@@ -1064,6 +1084,14 @@ void CSDLPlayer::outputAudio(SFgAudioFrame* data)
 		return;
 	}
 
+	static int s_audioLogCount = 0;
+	if (s_audioLogCount < 3) {
+		s_audioLogCount++;
+		FILE* lf = NULL; fopen_s(&lf, "airplay_debug.log", "a");
+		if (lf) { fprintf(lf, "outputAudio #%d: rate=%u ch=%u bits=%u dataLen=%u\n",
+			s_audioLogCount, data->sampleRate, data->channels, data->bitsPerSample, data->dataLen); fclose(lf); }
+	}
+
 	initAudio(data);
 
 	if (m_bDumpAudio) {
@@ -1154,7 +1182,7 @@ void CSDLPlayer::initVideo(int width, int height)
 	m_windowHeight = height;
 
 	// Create SDL2 window with resizable support and HiDPI awareness
-	m_window = SDL_CreateWindow("AirPlay Server",
+	m_window = SDL_CreateWindow("AirPlay Server " APP_VERSION,
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		width, height,
 		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -1164,9 +1192,43 @@ void CSDLPlayer::initVideo(int width, int height)
 		return;
 	}
 
-	// Create GPU-accelerated renderer (no VSync - minimizes frame latency)
-	m_renderer = SDL_CreateRenderer(m_window, -1,
-		SDL_RENDERER_ACCELERATED);
+	// Disable the IME for this window so the H/F hotkeys work regardless of the
+	// system input language (no Zhuyin/CJK composition intercepting the keys).
+	{
+		SDL_SysWMinfo wmInfo;
+		SDL_VERSION(&wmInfo.version);
+		if (SDL_GetWindowWMInfo(m_window, &wmInfo)) {
+			ImmAssociateContext(wmInfo.info.win.window, NULL);
+		}
+	}
+
+	// Create GPU-accelerated renderer (no VSync - minimizes frame latency).
+	// Try backends in order and DELIBERATELY SKIP direct3d11: its YUV texture path
+	// renders an all-green screen on some GPUs/drivers. Prefer opengl (widest GPU
+	// compatibility), then direct3d (D3D9), then software as a last resort.
+	m_renderer = NULL;
+	{
+		const char* preferred[] = { "opengl", "direct3d", "software" };
+		int nDrivers = SDL_GetNumRenderDrivers();
+		for (int pref = 0; pref < 3 && m_renderer == NULL; pref++) {
+			for (int i = 0; i < nDrivers; i++) {
+				SDL_RendererInfo info;
+				if (SDL_GetRenderDriverInfo(i, &info) == 0 && strcmp(info.name, preferred[pref]) == 0) {
+					Uint32 flags = (strcmp(preferred[pref], "software") == 0)
+						? SDL_RENDERER_SOFTWARE : SDL_RENDERER_ACCELERATED;
+					m_renderer = SDL_CreateRenderer(m_window, i, flags);
+					if (m_renderer != NULL) {
+						printf("Using SDL renderer: %s\n", info.name);
+					}
+					break;
+				}
+			}
+		}
+		// Last resort: let SDL choose any available renderer.
+		if (m_renderer == NULL) {
+			m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
+		}
+	}
 
 	if (m_renderer == NULL) {
 		printf("Could not create renderer: %s\n", SDL_GetError());
@@ -1231,29 +1293,31 @@ void CSDLPlayer::toggleFullscreen()
 		SDL_GetWindowPosition(m_window, &m_windowedX, &m_windowedY);
 		SDL_GetWindowSize(m_window, &m_windowedW, &m_windowedH);
 
-		// Enter borderless fullscreen (SDL2 handles everything)
-		SDL_SetWindowFullscreen(m_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		// Borderless WINDOWED fullscreen: just drop the border and grow the window to
+		// cover the whole monitor. No display-mode change => instant, no black flash.
+		int disp = SDL_GetWindowDisplayIndex(m_window);
+		SDL_Rect r;
+		if (disp < 0 || SDL_GetDisplayBounds(disp, &r) != 0) SDL_GetDisplayBounds(0, &r);
+		SDL_SetWindowBordered(m_window, SDL_FALSE);
+		SDL_SetWindowPosition(m_window, r.x, r.y);
+		// +1px taller than the screen so Windows does NOT treat it as exclusive
+		// fullscreen (avoids the slow "fullscreen optimization" mode-flip / black).
+		SDL_SetWindowSize(m_window, r.w, r.h + 1);
 
-		// Update window dimensions
-		SDL_GetWindowSize(m_window, &m_windowWidth, &m_windowHeight);
-
-		// Recalculate display rect for fullscreen
+		m_windowWidth = r.w;
+		m_windowHeight = r.h;
 		calculateDisplayRect();
 
 		m_bFullscreen = true;
 	}
 	else {
-		// Exit fullscreen
-		SDL_SetWindowFullscreen(m_window, 0);
-
-		// Restore window position and size
-		SDL_SetWindowPosition(m_window, m_windowedX, m_windowedY);
+		// Restore bordered window at its previous position/size.
+		SDL_SetWindowBordered(m_window, SDL_TRUE);
 		SDL_SetWindowSize(m_window, m_windowedW, m_windowedH);
+		SDL_SetWindowPosition(m_window, m_windowedX, m_windowedY);
 
 		m_windowWidth = m_windowedW;
 		m_windowHeight = m_windowedH;
-
-		// Recalculate display rect for windowed mode
 		calculateDisplayRect();
 
 		m_bFullscreen = false;
@@ -1587,7 +1651,7 @@ void CSDLPlayer::showWindow()
 		SDL_ShowWindow(m_window);
 		SDL_RaiseWindow(m_window);
 		m_bWindowVisible = true;
-		SDL_SetWindowTitle(m_window, "AirPlay Server - Connected");
+		SDL_SetWindowTitle(m_window, "AirPlay Server " APP_VERSION " - Connected");
 	}
 }
 

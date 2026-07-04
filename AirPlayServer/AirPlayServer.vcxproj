@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\$(PlatformTarget);$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>airplay2dll.lib;SDL2.lib;ws2_32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -117,7 +117,7 @@ xcopy /y "$(SolutionDir)external\plist\lib\$(PlatformTarget)\*.dll" $(OutDir)</C
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\$(PlatformTarget);$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>airplay2dll.lib;SDL2.lib;ws2_32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -143,7 +143,7 @@ xcopy /y "$(SolutionDir)external\plist\lib\$(PlatformTarget)\*.dll" $(OutDir)</C
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\$(PlatformTarget);$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>airplay2dll.lib;SDL2.lib;ws2_32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -169,7 +169,7 @@ xcopy /y "$(SolutionDir)external\plist\lib\$(PlatformTarget)\*.dll" $(OutDir)</C
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\$(PlatformTarget);$(OutDir);$(SolutionDir)external\SDL2\lib\$(PlatformTarget)</AdditionalLibraryDirectories>
       <AdditionalDependencies>airplay2dll.lib;SDL2.lib;ws2_32.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
@@ -180,6 +180,7 @@ xcopy /y "$(SolutionDir)external\plist\lib\$(PlatformTarget)\*.dll" $(OutDir)</C
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AirPlayServer.cpp" />
+    <ResourceCompile Include="app.rc" />
     <ClCompile Include="CAirServer.cpp" />
     <ClCompile Include="CAirServerCallback.cpp" />
     <ClCompile Include="CAutoLock.cpp" />

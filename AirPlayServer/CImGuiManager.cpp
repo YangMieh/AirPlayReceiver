@@ -15,7 +15,8 @@ CImGuiManager::CImGuiManager()
 	, m_pRenderer(NULL)
 	, m_bEditingDeviceName(false)
 	, m_bShowUI(false)
-	, m_qualityPreset(QUALITY_BALANCED)  // Default to balanced (60fps, linear filtering)
+	, m_reqToggleFullscreen(false)
+	, m_qualityPreset(QUALITY_GOOD)  // Default to Good (60fps + Lanczos, highest quality)
 	, m_bNeedSyncTabs(true)
 	, m_deviceVolume(0.5f)     // Default 50% (will be updated by device)
 	, m_localVolume(1.0f)      // Default 100% local volume
@@ -171,6 +172,29 @@ void CImGuiManager::ProcessEvent(SDL_Event* event)
 	ImGui_ImplSDL2_ProcessEvent(event);
 }
 
+void CImGuiManager::RenderToolbar(bool* pShowUI, bool isFullscreen, bool cursorVisible)
+{
+	if (!cursorVisible) return;  // hidden together with the cursor when idle
+
+	ImGuiViewport* vp = ImGui::GetMainViewport();
+	// Only reveal when the mouse is near the top edge of the window (whole top strip).
+	float my = ImGui::GetIO().MousePos.y;
+	if (my < vp->WorkPos.y - 2.0f || my >= vp->WorkPos.y + 80.0f) return;
+
+	ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + 10.0f, vp->WorkPos.y + 10.0f));
+	ImGui::SetNextWindowBgAlpha(0.55f);
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing;
+	if (ImGui::Begin("##toolbar", NULL, flags))
+	{
+		if (ImGui::Button(*pShowUI ? "Hide Info" : "Info")) { *pShowUI = !*pShowUI; }
+		ImGui::SameLine();
+		if (ImGui::Button(isFullscreen ? "Windowed" : "Fullscreen")) { m_reqToggleFullscreen = true; }
+	}
+	ImGui::End();
+}
+
 void CImGuiManager::RenderHomeScreen(const char* deviceName, bool isConnected, const char* connectedDeviceName, bool isServerRunning)
 {
 	if (!m_bInitialized) {
@@ -310,6 +334,13 @@ void CImGuiManager::RenderOverlay(bool* pShowUI, const char* deviceName, bool is
 	ImVec4 labelColor = ImVec4(0.50f, 0.52f, 0.56f, 1.0f);
 	ImVec4 accentColor = ImVec4(0.35f, 0.61f, 0.95f, 1.0f);
 
+	// Mouse-friendly close button (H key also toggles this panel)
+	if (ImGui::Button("Close (H)")) { *pShowUI = false; }
+	ImGui::Separator();
+
+	ImGui::TextColored(accentColor, "AirPlay Receiver %s", APP_VERSION);
+	ImGui::Separator();
+
 	// Device name
 	ImGui::TextColored(labelColor, "Device");
 	ImGui::SameLine();
@@ -367,7 +398,7 @@ void CImGuiManager::RenderOverlay(bool* pShowUI, const char* deviceName, bool is
 
 		if (ImGui::BeginTabItem("Good", NULL, goodFlags)) {
 			m_qualityPreset = QUALITY_GOOD;
-			ImGui::TextColored(labelColor, "30fps, Lanczos");
+			ImGui::TextColored(labelColor, "60fps, Lanczos");
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Balanced", NULL, balancedFlags)) {

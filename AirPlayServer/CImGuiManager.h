@@ -2,6 +2,9 @@
 #include "imgui.h"
 #include "SDL.h"
 
+// App version. Bump +0.0.1 per small change; each field carries at >9 (v1.0.9 -> v1.1.0).
+#define APP_VERSION "v1.0.0"
+
 class CSDLPlayer;
 
 // All performance data passed to the perf overlay (F1)
@@ -68,6 +71,10 @@ public:
 		unsigned long long totalBytes = 0);
 	void RenderPerfGraphs(const SPerfData& perf);
 
+	// Top toolbar with Info / Fullscreen buttons (auto-hides with the cursor)
+	void RenderToolbar(bool* pShowUI, bool isFullscreen, bool visible);
+	bool ConsumeToggleFullscreen() { bool r = m_reqToggleFullscreen; m_reqToggleFullscreen = false; return r; }
+
 	// Input handling
 	bool WantCaptureMouse() const { return ImGui::GetIO().WantCaptureMouse; }
 	bool WantCaptureKeyboard() const { return ImGui::GetIO().WantCaptureKeyboard; }
@@ -103,6 +110,7 @@ private:
 
 	// UI state
 	bool m_bShowUI;
+	bool m_reqToggleFullscreen;  // set by toolbar Fullscreen button, consumed by player
 
 	// Quality preset
 	EQualityPreset m_qualityPreset;
