@@ -1,7 +1,6 @@
 # AirPlay Receiver for Windows — iOS Screen Mirroring (60fps, high-res)
 
-> A Windows AirPlay receiver that lets an **iPhone/iPad mirror its screen to a PC with no app installed on the phone** — including watching **YouTube together** at **60fps** and **super‑sampled high resolution**.
->
+> A Windows AirPlay receiver that lets an **iPhone/iPad mirror its screen to a PC with no app installed on the phone** — including watching **YouTube together** at **60fps** and **super‑sampled high resolution**.<br>
 > 讓 **iPhone/iPad 不裝任何 app**，用內建「螢幕鏡像」把畫面投到 Windows PC 的 AirPlay 接收器 —— 可以**一起看 YouTube**，支援 **60fps** 與**超採樣高解析度**。
 
 **Works across a wide range of iOS** — tested from **iOS 12.5.8 (iPhone 6)** to **iOS 26 & 27**, old and new iPhones alike.<br>
