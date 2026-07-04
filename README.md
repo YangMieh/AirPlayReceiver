@@ -4,10 +4,11 @@
 >
 > 讓 **iPhone/iPad 不裝任何 app**，用內建「螢幕鏡像」把畫面投到 Windows PC 的 AirPlay 接收器 —— 可以**一起看 YouTube**，支援 **60fps** 與**超採樣高解析度**。
 
-**🙏 This project is a fork of / built on [xenos1337/AirPlayServer](https://github.com/xenos1337/AirPlayServer) (MIT), which itself builds on [fingergit/airplay2-win](https://github.com/fingergit/airplay2-win). Huge thanks to both — their work is the foundation that made all of this possible.**
+**This project is a fork of / built on [xenos1337/AirPlayServer](https://github.com/xenos1337/AirPlayServer) (MIT), which itself builds on [fingergit/airplay2-win](https://github.com/fingergit/airplay2-win). Huge thanks to both — their work is the foundation that made all of this possible.**
+
 **本專案基於 [xenos1337/AirPlayServer](https://github.com/xenos1337/AirPlayServer)（MIT 授權）延伸開發，而它又源自 [fingergit/airplay2-win](https://github.com/fingergit/airplay2-win)。核心的 AirPlay 連線與解碼都來自它們，由衷感謝！**
 
-> ⚠️ For personal / non‑commercial use. 僅供個人／非商業用途。
+> For personal / non‑commercial use. 僅供個人／非商業用途。
 
 ---
 
@@ -16,13 +17,13 @@
 ### What this fork adds
 The upstream receiver connects on modern iOS but had a few walls for real‑world use. This fork adds:
 
-- **📺 Watch YouTube (and other cast apps) via mirroring** — apps like YouTube auto‑switch to *AirPlay Video* mode (which the receiver can't play) and go blank. We hide the receiver's "video" capability in the mDNS advertisement so the app falls back to **screen mirroring**, and you see it normally.
-- **🎞️ 60fps** — we patch the advertised display `maxFPS` (30 → 60) so the iPhone streams at 60fps.
-- **🔍 High‑resolution super‑sampling** — we bump the advertised display resolution so the iPhone sends a higher‑res mirror; downscaled into the window it looks noticeably crisper (like watching 4K content on a 1080p screen).
-- **🟢 No green screen** — auto‑selects a working GPU render backend (OpenGL) instead of the buggy D3D11 YUV path.
-- **🛡️ No more crashes** — the video‑mode transition made the bundled DLL kill the whole process; we intercept `NtTerminateProcess` so the app survives and keeps mirroring.
-- **🧰 Quality‑of‑life UI** — a top toolbar (revealed on top‑edge hover) with Info / Fullscreen buttons, a mouse‑closable info panel, and **instant borderless fullscreen** (no black flash).
-- **⌨️ Hotkeys always work** — IME is disabled for the window so `H` / `F` work in any input language (no need to switch off Zhuyin/CJK input).
+- **Watch YouTube (and other cast apps) via mirroring** — apps like YouTube auto‑switch to *AirPlay Video* mode (which the receiver can't play) and go blank. We hide the receiver's "video" capability in the mDNS advertisement so the app falls back to **screen mirroring**, and you see it normally.
+- **60fps** — we patch the advertised display `maxFPS` (30 → 60) so the iPhone streams at 60fps.
+- **High‑resolution super‑sampling** — we bump the advertised display resolution so the iPhone sends a higher‑res mirror; downscaled into the window it looks noticeably crisper (like watching 4K content on a 1080p screen).
+- **No green screen** — auto‑selects a working GPU render backend (OpenGL) instead of the buggy D3D11 YUV path.
+- **No more crashes** — the video‑mode transition made the bundled DLL kill the whole process; we intercept `NtTerminateProcess` so the app survives and keeps mirroring.
+- **Quality‑of‑life UI** — a top toolbar (revealed on top‑edge hover) with Info / Fullscreen buttons, a mouse‑closable info panel, and **instant borderless fullscreen** (no black flash).
+- **Hotkeys always work** — IME is disabled for the window so `H` / `F` work in any input language (no need to switch off Zhuyin/CJK input).
 - Everything adapts to whatever screen it runs on, so it's fine to copy the folder to another PC or share with friends.
 
 ### Requirements
@@ -57,18 +58,20 @@ Output: `x64\Release\AirPlayServer.exe` (the runtime DLLs live next to it).
 ### 這個 fork 加了什麼
 上游接收器能在新版 iOS 連線，但實際使用有幾道牆。這個版本補上：
 
-- **📺 用「鏡像」看 YouTube（及其他投放 app）** —— YouTube 之類的 app 一偵測到 AirPlay 就自動切成「AirPlay 影片模式」（接收器播不了）而變空白。我們在 mDNS 廣播中**藏起「影片」能力**，逼 app 退回**螢幕鏡像**，畫面就正常顯示。
-- **🎞️ 60fps** —— 攔改接收器宣告的 `maxFPS`（30 → 60），讓 iPhone 以 60fps 串流。
-- **🔍 高解析超採樣** —— 把宣告的顯示解析度改大，iPhone 就送更高解析的鏡像；縮小塞進視窗後明顯更銳利（就像在 1080p 螢幕上看 4K 內容）。
-- **🟢 消除綠畫面** —— 自動挑選能正常運作的 GPU 渲染後端（OpenGL），避開有 bug 的 D3D11 YUV 路徑。
-- **🛡️ 不再閃退** —— 影片模式切換時，內建 DLL 會把整個程式關掉；我們攔截 `NtTerminateProcess`，讓程式存活、繼續鏡像。
-- **🧰 好用的介面** —— 頂端工具列（滑鼠靠近上緣才浮現）含 Info／Fullscreen 按鈕、資訊面板可用滑鼠關閉、**無邊框全螢幕秒切**（不黑屏）。
-- **⌨️ 熱鍵永遠有效** —— 停用視窗 IME，`H`／`F` 在任何輸入法下都能按（不用關掉注音）。
+- **用「鏡像」看 YouTube（及其他投放 app）** —— YouTube 之類的 app 一偵測到 AirPlay 就自動切成「AirPlay 影片模式」（接收器播不了）而變空白。我們在 mDNS 廣播中**藏起「影片」能力**，逼 app 退回**螢幕鏡像**，畫面就正常顯示。
+- **60fps** —— 攔改接收器宣告的 `maxFPS`（30 → 60），讓 iPhone 以 60fps 串流。
+- **高解析超採樣** —— 把宣告的顯示解析度改大，iPhone 就送更高解析的鏡像；縮小塞進視窗後明顯更銳利（就像在 1080p 螢幕上看 4K 內容）。
+- **消除綠畫面** —— 自動挑選能正常運作的 GPU 渲染後端（OpenGL），避開有 bug 的 D3D11 YUV 路徑。
+- **不再閃退** —— 影片模式切換時，內建 DLL 會把整個程式關掉；我們攔截 `NtTerminateProcess`，讓程式存活、繼續鏡像。
+- **好用的介面** —— 頂端工具列（滑鼠靠近上緣才浮現）含 Info／Fullscreen 按鈕、資訊面板可用滑鼠關閉、**無邊框全螢幕秒切**（不黑屏）。
+- **熱鍵永遠有效** —— 停用視窗 IME，`H`／`F` 在任何輸入法下都能按（不用關掉注音）。
 - 所有設定會依執行當下的螢幕自動適應，整包複製到別台電腦或分享給朋友都能直接用。
 
 ### 需求
 - Windows 10/11（x64）
-- Apple **Bonjour** 服務（裝置探索用）
+- **Apple Bonjour**（裝置探索用）—— 從 Apple 官方頁面安裝：
+  **https://support.apple.com/106380**（會自動導到你的語言）。
+  *若沒裝，程式啟動時會自動幫你開這連結。*
 - 與 PC 同一 Wi‑Fi 的 iPhone/iPad
 
 ### 建置
