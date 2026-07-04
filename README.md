@@ -38,10 +38,10 @@ Open `AirPlay.sln` in Visual Studio 2022 (Desktop C++ workload), or from a *x64 
 ```
 MSBuild AirPlayServer\AirPlayServer.vcxproj /p:SolutionDir=<repo>\ /p:Configuration=Release /p:Platform=x64
 ```
-Output: `x64\Release\AirPlayServer.exe` (the runtime DLLs live next to it).
+Output: `x64\Release\AirPlayReceiver.exe` (the runtime DLLs live next to it).
 
 ### Usage
-1. Run `AirPlayServer.exe`.
+1. Run `AirPlayReceiver.exe`.
 2. On the iPhone: Control Center → **Screen Mirroring** → pick the receiver.
 3. For sharpest video, watch fullscreen in landscape.
 4. Move the mouse to the **top edge** for the toolbar; press **H** for the info panel, **F** for fullscreen.
@@ -79,10 +79,10 @@ Output: `x64\Release\AirPlayServer.exe` (the runtime DLLs live next to it).
 ```
 MSBuild AirPlayServer\AirPlayServer.vcxproj /p:SolutionDir=<repo>\ /p:Configuration=Release /p:Platform=x64
 ```
-輸出：`x64\Release\AirPlayServer.exe`（執行期 DLL 就在旁邊）。
+輸出：`x64\Release\AirPlayReceiver.exe`（執行期 DLL 就在旁邊）。
 
 ### 使用
-1. 執行 `AirPlayServer.exe`。
+1. 執行 `AirPlayReceiver.exe`。
 2. iPhone：控制中心 →「**螢幕鏡像**」→ 選這台接收器。
 3. 想要最清晰的影片，把手機轉橫、影片全螢幕。
 4. 滑鼠移到**視窗上緣**叫出工具列；按 **H** 開資訊面板、**F** 全螢幕。

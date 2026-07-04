@@ -1182,7 +1182,7 @@ void CSDLPlayer::initVideo(int width, int height)
 	m_windowHeight = height;
 
 	// Create SDL2 window with resizable support and HiDPI awareness
-	m_window = SDL_CreateWindow("AirPlay Server " APP_VERSION,
+	m_window = SDL_CreateWindow("AirPlay Receiver " APP_VERSION,
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		width, height,
 		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -1651,7 +1651,7 @@ void CSDLPlayer::showWindow()
 		SDL_ShowWindow(m_window);
 		SDL_RaiseWindow(m_window);
 		m_bWindowVisible = true;
-		SDL_SetWindowTitle(m_window, "AirPlay Server " APP_VERSION " - Connected");
+		SDL_SetWindowTitle(m_window, "AirPlay Receiver " APP_VERSION " - Connected");
 	}
 }
 
