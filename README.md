@@ -29,7 +29,7 @@ The upstream receiver connects on modern iOS but had a few walls for real‑worl
 ### Requirements
 - Windows 10/11 (x64)
 - **Apple Bonjour** (for device discovery) — install it from Apple's official page:
-  **https://support.apple.com/106380** (auto‑localizes to your region).
+  [**support.apple.com/106380**](https://support.apple.com/106380) (auto‑localizes to your region).
   *If it's missing, the app opens this link for you automatically on startup.*
 - An iPhone/iPad on the same Wi‑Fi network
 
@@ -70,7 +70,7 @@ Output: `x64\Release\AirPlayServer.exe` (the runtime DLLs live next to it).
 ### 需求
 - Windows 10/11（x64）
 - **Apple Bonjour**（裝置探索用）—— 從 Apple 官方頁面安裝：
-  **https://support.apple.com/106380**（會自動導到你的語言）。
+  [**support.apple.com/106380**](https://support.apple.com/106380)（會自動導到你的語言）。
   *若沒裝，程式啟動時會自動幫你開這連結。*
 - 與 PC 同一 Wi‑Fi 的 iPhone/iPad
 
