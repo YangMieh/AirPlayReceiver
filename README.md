@@ -4,9 +4,9 @@
 >
 > 讓 **iPhone/iPad 不裝任何 app**，用內建「螢幕鏡像」把畫面投到 Windows PC 的 AirPlay 接收器 —— 可以**一起看 YouTube**，支援 **60fps** 與**超採樣高解析度**。
 
-**Works on modern iOS** — tested on iPhone running **iOS 26 and iOS 27** (many older AirPlay receivers break on new iOS; this one is kept working).
+**Works across a wide range of iOS** — tested from **iOS 12.5.8 (iPhone 6)** all the way to **iOS 26 & 27** — old and new iPhones alike (many other AirPlay receivers break on new iOS).
 
-**支援新版 iOS** —— 已在 **iOS 26、27** 的 iPhone 實測順暢運行（很多舊的 AirPlay 接收器在新版 iOS 上會壞，這個持續維持可用）。
+**支援超廣的 iOS 版本** —— 從 **iOS 12.5.8（iPhone 6）** 一路到 **iOS 26、27** 都實測可用，新舊 iPhone 通吃（很多其他 AirPlay 接收器在新版 iOS 上會壞）。
 
 **This project is a fork of / built on [xenos1337/AirPlayServer](https://github.com/xenos1337/AirPlayServer) (MIT), which itself builds on [fingergit/airplay2-win](https://github.com/fingergit/airplay2-win). Huge thanks to both — their work is the foundation that made all of this possible.**
 
