@@ -328,6 +328,7 @@ dnssd_register_raop(dnssd_t *dnssd, const char *name, unsigned short port, const
 {
 	TXTRecordRef txtRecord;
 	char servname[MAX_SERVNAME];
+	char features[32];
 	int ret;
 	int i;
 	int registered = 0;
@@ -349,6 +350,8 @@ dnssd_register_raop(dnssd_t *dnssd, const char *name, unsigned short port, const
 		dnssd->interfaces[0].valid = 1;
 		dnssd->interfaceCount = 1;
 	}
+
+	snprintf(features, sizeof(features), "0x%X,0x%X", GLOBAL_FEATURES_1, GLOBAL_FEATURES_2);
 
 	dnssd->raopServiceCount = 0;
 
@@ -386,6 +389,7 @@ dnssd_register_raop(dnssd_t *dnssd, const char *name, unsigned short port, const
 		dnssd->TXTRecordSetValue(&txtRecord, "sm", strlen(RAOP_SM), RAOP_SM);
 		dnssd->TXTRecordSetValue(&txtRecord, "ek", strlen(RAOP_EK), RAOP_EK);
 		dnssd->TXTRecordSetValue(&txtRecord, "sf", strlen(RAOP_SF), RAOP_SF);
+		dnssd->TXTRecordSetValue(&txtRecord, "ft", strlen(features), features);
 		dnssd->TXTRecordSetValue(&txtRecord, "am", strlen(GLOBAL_MODEL), GLOBAL_MODEL);
 
 		/* Convert hardware address to string */
@@ -431,7 +435,7 @@ dnssd_register_airplay(dnssd_t *dnssd, const char *name, unsigned short port, co
 {
 	TXTRecordRef txtRecord;
 	char deviceid[3*MAX_HWADDR_LEN];
-	char features[16];
+	char features[32];
 	int ret;
 	int i;
 	int registered = 0;
@@ -454,8 +458,7 @@ dnssd_register_airplay(dnssd_t *dnssd, const char *name, unsigned short port, co
 		dnssd->interfaceCount = 1;
 	}
 
-	features[sizeof(features)-1] = '\0';
-	snprintf(features, sizeof(features)-1, "0x%x", GLOBAL_FEATURES);
+	snprintf(features, sizeof(features), "0x%X,0x%X", GLOBAL_FEATURES_1, GLOBAL_FEATURES_2);
 
 	dnssd->airplayServiceCount = 0;
 
@@ -481,7 +484,7 @@ dnssd_register_airplay(dnssd_t *dnssd, const char *name, unsigned short port, co
 		dnssd->TXTRecordCreate(&txtRecord, 0, NULL);
 		dnssd->TXTRecordSetValue(&txtRecord, "srcvers", strlen(GLOBAL_VERSION), GLOBAL_VERSION);
 		dnssd->TXTRecordSetValue(&txtRecord, "deviceid", strlen(deviceid), deviceid);
-		dnssd->TXTRecordSetValue(&txtRecord, "features", strlen("0x5A7FFFF7, 0x1E"), "0x5A7FFFF7,0x1E");
+		dnssd->TXTRecordSetValue(&txtRecord, "features", strlen(features), features);
 		dnssd->TXTRecordSetValue(&txtRecord, "model", strlen(GLOBAL_MODEL), GLOBAL_MODEL);
 		dnssd->TXTRecordSetValue(&txtRecord, "flags", strlen(RAOP_SF), RAOP_SF);
 		dnssd->TXTRecordSetValue(&txtRecord, "vv", strlen(RAOP_VV), RAOP_VV);

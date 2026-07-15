@@ -13,19 +13,30 @@
 
 ---
 
+## Download / 下載
+
+| File / 檔案 | Type / 類型 | When to use / 何時用 |
+|---|---|---|
+| [**`AirPlayReceiver.exe`**](https://github.com/YangMieh/AirPlayReceiver/releases/download/v1.0.1/AirPlayReceiver.exe) | Single file / 單一檔（建議 recommended） | Easiest — just double‑click. 最簡單，雙擊就跑。 |
+| [**`AirPlayReceiver-v1.0.1-win-x64.zip`**](https://github.com/YangMieh/AirPlayReceiver/releases/download/v1.0.1/AirPlayReceiver-v1.0.1-win-x64.zip) | Folder / 資料夾 | If antivirus flags the single .exe (false positive). 若防毒誤報單一檔就改用這個。 |
+
+The single `.exe` self‑extracts on first run (may trigger an antivirus false positive — use the `.zip` if so). Requires **Apple Bonjour** (free, one‑time): [support.apple.com/106380](https://support.apple.com/106380).
+
+單一 `.exe` 首次執行會自解壓（可能被防毒誤報，遇到就改用 `.zip`）。需先裝免費的 **Apple Bonjour**：[support.apple.com/106380](https://support.apple.com/106380)。
+
+---
+
 ## English
 
 ### What this fork adds
-The upstream receiver connects on modern iOS but had a few walls for real‑world use. This fork adds:
+This fork is **rebased on upstream [v1.1.2](https://github.com/xenos1337/AirPlayServer/releases/tag/v1.1.2)**, which already gives you YouTube‑via‑mirroring, no video‑mode crash, and the modern dark UI. On top of that base, this fork adds:
 
-- **Watch YouTube (and other cast apps) via mirroring** — apps like YouTube auto‑switch to *AirPlay Video* mode (which the receiver can't play) and go blank. We hide the receiver's "video" capability in the mDNS advertisement so the app falls back to **screen mirroring**, and you see it normally.
-- **60fps** — we patch the advertised display `maxFPS` (30 → 60) so the iPhone streams at 60fps.
+- **60fps** — we patch the advertised display `maxFPS` (30 → 60) so the iPhone actually *streams* at 60fps (upstream's presets only pace the render side).
 - **High‑resolution super‑sampling** — we bump the advertised display resolution so the iPhone sends a higher‑res mirror; downscaled into the window it looks noticeably crisper (like watching 4K content on a 1080p screen).
-- **No green screen** — auto‑selects a working GPU render backend (OpenGL) instead of the buggy D3D11 YUV path.
-- **No more crashes** — the video‑mode transition made the bundled DLL kill the whole process; we intercept `NtTerminateProcess` so the app survives and keeps mirroring.
-- **Quality‑of‑life UI** — a top toolbar (revealed on top‑edge hover) with Info / Fullscreen buttons, a mouse‑closable info panel, and **instant borderless fullscreen** (no black flash).
-- **Hotkeys always work** — IME is disabled for the window so `H` / `F` work in any input language (no need to switch off Zhuyin/CJK input).
-- Everything adapts to whatever screen it runs on, so it's fine to copy the folder to another PC or share with friends.
+- **No green screen** — the SDL renderer prefers D3D9 / OpenGL and never D3D11, whose YUV path renders all‑green on some GPUs/drivers.
+- **Hotkeys always work** — IME is disabled for the process so `H` / `F` work in any input language (no need to switch off Zhuyin/CJK input).
+
+> Watching YouTube together via mirroring and surviving the AirPlay‑video crash used to be this fork's headline features. As of v1.0.1 the upstream project fixes both at the source level, so we now inherit them cleanly instead of patching at runtime.
 
 ### Requirements
 - Windows 10/11 (x64)
@@ -57,16 +68,14 @@ Output: `x64\Release\AirPlayReceiver.exe` (the runtime DLLs live next to it).
 ## 繁體中文
 
 ### 這個 fork 加了什麼
-上游接收器能在新版 iOS 連線，但實際使用有幾道牆。這個版本補上：
+這個版本**改以上游 [v1.1.2](https://github.com/xenos1337/AirPlayServer/releases/tag/v1.1.2) 為基底** —— 用鏡像看 YouTube、不再閃退、現代深色介面，這些上游本身就有了。在這個基底上，本 fork 額外加上：
 
-- **用「鏡像」看 YouTube（及其他投放 app）** —— YouTube 之類的 app 一偵測到 AirPlay 就自動切成「AirPlay 影片模式」（接收器播不了）而變空白。我們在 mDNS 廣播中**藏起「影片」能力**，逼 app 退回**螢幕鏡像**，畫面就正常顯示。
-- **60fps** —— 攔改接收器宣告的 `maxFPS`（30 → 60），讓 iPhone 以 60fps 串流。
+- **60fps** —— 攔改接收器宣告的 `maxFPS`（30 → 60），讓 iPhone 真的以 60fps *串流*（上游的預設只是在電腦端補幀）。
 - **高解析超採樣** —— 把宣告的顯示解析度改大，iPhone 就送更高解析的鏡像；縮小塞進視窗後明顯更銳利（就像在 1080p 螢幕上看 4K 內容）。
-- **消除綠畫面** —— 自動挑選能正常運作的 GPU 渲染後端（OpenGL），避開有 bug 的 D3D11 YUV 路徑。
-- **不再閃退** —— 影片模式切換時，內建 DLL 會把整個程式關掉；我們攔截 `NtTerminateProcess`，讓程式存活、繼續鏡像。
-- **好用的介面** —— 頂端工具列（滑鼠靠近上緣才浮現）含 Info／Fullscreen 按鈕、資訊面板可用滑鼠關閉、**無邊框全螢幕秒切**（不黑屏）。
-- **熱鍵永遠有效** —— 停用視窗 IME，`H`／`F` 在任何輸入法下都能按（不用關掉注音）。
-- 所有設定會依執行當下的螢幕自動適應，整包複製到別台電腦或分享給朋友都能直接用。
+- **消除綠畫面** —— SDL renderer 優先走 D3D9／OpenGL、絕不用 D3D11（它的 YUV 路徑在某些顯卡會整片綠）。
+- **熱鍵永遠有效** —— 停用整個程式的 IME，`H`／`F` 在任何輸入法下都能按（不用關掉注音）。
+
+> 「用鏡像一起看 YouTube」和「不再因 AirPlay 影片模式閃退」原本是這個 fork 的招牌；到了 v1.0.1，上游已在原始碼層級把這兩件事做好，所以我們現在是乾淨地繼承，而非執行期硬 patch。
 
 ### 需求
 - Windows 10/11（x64）

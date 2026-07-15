@@ -25,6 +25,7 @@ typedef std::queue<SFgVideoFrame*> SFgVideoFrameQueue;
 #define HIDE_WINDOW_CODE 3
 #define TOGGLE_FULLSCREEN_CODE 4
 #define WINDOW_RESIZE_CODE 5
+#define CONNECTION_STATE_CHANGED_CODE 6
 
 class CSDLPlayer
 {
@@ -61,8 +62,21 @@ public:
 	SDL_Window* m_window;
 	SDL_Renderer* m_renderer;
 	SDL_Texture* m_videoTexture;   // IYUV streaming texture (GPU does BT.709 colorspace + scaling)
+	bool m_videoTextureHasFrame;   // Never draw an IYUV texture before its first successful upload
 	SDL_Rect m_displayRect;      // Where to display the video (centered with letterbox)
 	int m_rotationAngle;         // Video rotation in degrees (0, 90, 180, 270)
+	float m_zoomLevel;           // View zoom: 1.0 = fit to window
+	float m_zoomPanX;            // Normalized horizontal focal offset (-1.0 to 1.0)
+	float m_zoomPanY;            // Normalized vertical focal offset (-1.0 to 1.0)
+	bool m_bPanning;             // Left-button pan interaction is active
+	bool m_bLeftButtonDown;      // Tracks a non-ImGui click through button-up
+	bool m_bPanMoved;            // Movement exceeded the double-click drag threshold
+	float m_panStartX;           // Pan/click start in renderer pixels
+	float m_panStartY;
+	float m_panLastX;            // Previous pan position in renderer pixels
+	float m_panLastY;
+	Uint8 m_leftClickCount;      // Click count captured on button-down
+	volatile LONG m_zoomResetPending;  // Connection callback requests reset on SDL thread
 
 	// Video source dimensions (from AirPlay stream)
 	int m_videoWidth;
@@ -79,6 +93,7 @@ public:
 	unsigned int m_fpsFrameCount;           // Frame count for FPS calculation
 	float m_currentFPS;                     // Current FPS
 	unsigned long long m_totalBytes;        // Total bytes received for bitrate calculation
+	unsigned long long m_lastBitrateTotalBytes; // Session-local baseline for bitrate deltas
 	DWORD m_bitrateStartTime;                // Start time for bitrate calculation
 	float m_currentBitrateMbps;             // Current bitrate in Mbps
 
@@ -138,12 +153,25 @@ public:
 	// Connection state for UI
 	bool m_bConnected;
 	char m_connectedDeviceName[256];
+	volatile LONG m_shuttingDown;  // Blocks callback events once server teardown starts
 
 	// Disconnect transition (to render black screen briefly)
 	bool m_bDisconnecting;
 	DWORD m_dwDisconnectStartTime;
 
-	void calculateDisplayRect();  // Calculate centered letterboxed display rect
+	void calculateDisplayRect();  // Calculate fitted, zoomed display rect
+	SDL_Rect calculateFittedVideoBounds() const;  // Visible video bounds at 1x, after rotation
+	SDL_Rect calculateZoomedVideoBounds() const;  // Visible video bounds after zoom/pan
+	bool recreateVideoTexture();  // Create and initialize texture from the latest CPU YUV buffer
+	void windowToRendererCoordinates(float windowX, float windowY, float& rendererX, float& rendererY) const;
+	void applyWheelZoom(float wheelDelta, float mouseX, float mouseY);
+	void applyDragPan(float deltaX, float deltaY);
+	void stopPanning();
+	void resetZoom();
+	void applyConnectionState(bool connected, const char* deviceName);
+	void clearSessionVideoFrame();
+	void stopServerForShutdown();
+	void resizeWindowForVideo(int width, int height);
 	void resizeWindow(int width, int height);  // Handle window resize
 
 	// Window handle for show/hide
@@ -167,6 +195,7 @@ public:
 	// Cursor auto-hide after inactivity
 	DWORD m_lastMouseMoveTime;  // Time of last mouse movement
 	bool m_bCursorHidden;       // Whether cursor is currently hidden
+	SDL_Cursor* m_panCursor;    // Move cursor while an active drag owns the view
 	static const DWORD CURSOR_HIDE_DELAY_MS = 5000;  // Hide after 5 seconds
 
 	// Performance monitoring (F1 toggles graph overlay)
@@ -206,4 +235,5 @@ public:
 	unsigned int m_displayFrameCount;    // Counter for display FPS calculation
 	DWORD m_displayFpsStartTime;         // Start time for display FPS calculation
 	DWORD m_connectionStartTime;         // GetTickCount when connection started (for uptime)
+
 };

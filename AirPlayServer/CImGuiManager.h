@@ -2,8 +2,9 @@
 #include "imgui.h"
 #include "SDL.h"
 
-// App version. Bump +0.0.1 per small change; each field carries at >9 (v1.0.9 -> v1.1.0).
-#define APP_VERSION "v1.0.0"
+// Fork version (YangMieh/AirPlayReceiver). Base: xenos/AirPlayServer v1.1.2.
+// Bump +0.0.1 per small change; each field carries at >9 (v1.0.9 -> v1.1.0).
+#define APP_VERSION "v1.0.1"
 
 class CSDLPlayer;
 
@@ -50,6 +51,13 @@ enum EQualityPreset
 	QUALITY_FAST = 2       // 60fps, linear filtering - lowest latency
 };
 
+enum EOverlayState
+{
+	OVERLAY_EXPANDED = 0,
+	OVERLAY_LAUNCHER = 1,
+	OVERLAY_HIDDEN = 2
+};
+
 class CImGuiManager
 {
 public:
@@ -61,23 +69,22 @@ public:
 	void NewFrame();
 	void Render();
 	void ProcessEvent(SDL_Event* event);
+	void RecreateRendererDeviceObjects();
 
 	// UI rendering
-	void RenderHomeScreen(const char* deviceName, bool isConnected, const char* connectedDeviceName, bool isServerRunning = true);
-	void RenderDisconnectMessage(const char* deviceName);
-	void RenderOverlay(bool* pShowUI, const char* deviceName, bool isConnected, const char* connectedDeviceName,
+	void RenderHomeScreen(const char* deviceName, bool isServerRunning = true);
+	void RenderDisconnectMessage(const char* deviceName, float visibility = 1.0f);
+	void RenderOverlay(const char* deviceName, bool isConnected, const char* connectedDeviceName,
 		int videoWidth = 0, int videoHeight = 0, float fps = 0.0f, float bitrateMbps = 0.0f,
 		unsigned long long totalFrames = 0, unsigned long long droppedFrames = 0,
-		unsigned long long totalBytes = 0);
-	void RenderPerfGraphs(const SPerfData& perf);
-
-	// Top toolbar with Info / Fullscreen buttons (auto-hides with the cursor)
-	void RenderToolbar(bool* pShowUI, bool isFullscreen, bool visible);
-	bool ConsumeToggleFullscreen() { bool r = m_reqToggleFullscreen; m_reqToggleFullscreen = false; return r; }
+		float zoomLevel = 1.0f, int rotationAngle = 0,
+		bool* pResetView = NULL, bool* pRotateView = NULL);
+	void RenderPerfGraphs(const SPerfData& perf, bool* pOpen);
 
 	// Input handling
 	bool WantCaptureMouse() const { return ImGui::GetIO().WantCaptureMouse; }
 	bool WantCaptureKeyboard() const { return ImGui::GetIO().WantCaptureKeyboard; }
+	bool WantTextInput() const { return ImGui::GetIO().WantTextInput; }
 
 	// Get edited device name
 	const char* GetDeviceName() const;
@@ -86,8 +93,13 @@ public:
 	EQualityPreset GetQualityPreset() const { return m_qualityPreset; }
 
 	// Overlay visibility (persisted in settings)
-	bool IsOverlayVisible() const { return m_bShowUI; }
-	void SetOverlayVisible(bool visible) { m_bShowUI = visible; }
+	EOverlayState GetOverlayState() const { return m_overlayState; }
+	bool IsOverlayVisible() const { return m_overlayState == OVERLAY_EXPANDED; }
+	void ShowOverlay() { m_overlayState = OVERLAY_EXPANDED; }
+	void ToggleOverlay() {
+		m_overlayState = m_overlayState == OVERLAY_EXPANDED
+			? OVERLAY_HIDDEN : OVERLAY_EXPANDED;
+	}
 
 	// Audio controls
 	bool IsAutoAdjustEnabled() const { return m_bAutoAdjust; }
@@ -101,20 +113,28 @@ public:
 
 private:
 	bool m_bInitialized;
+	bool m_rendererDeviceResetPending;
 	ImGuiContext* m_pContext;
+	SDL_Window* m_pWindow;
 	SDL_Renderer* m_pRenderer;
+	ImFont* m_pFontBody;
+	ImFont* m_pFontHeading;
+	ImFont* m_pFontTitle;
+	ImFont* m_pFontMono;
 
 	// Device name editing
 	char m_deviceNameBuffer[256];
 	bool m_bEditingDeviceName;
 
 	// UI state
-	bool m_bShowUI;
-	bool m_reqToggleFullscreen;  // set by toolbar Fullscreen button, consumed by player
+	EOverlayState m_overlayState;
+	ImVec2 m_overlayAnchor;
+	bool m_overlayAnchorValid;
+	ImVec2 m_overlayExpandedSize;
+	bool m_overlayExpandedSizeValid;
 
 	// Quality preset
 	EQualityPreset m_qualityPreset;
-	bool m_bNeedSyncTabs;  // One-shot flag to sync tab selection on first overlay render
 
 	// Audio controls
 	float m_deviceVolume;        // Volume from AirPlay device (0.0 to 1.0)
@@ -125,5 +145,8 @@ private:
 	// DPI scaling
 	float m_dpiScale;            // System DPI scale factor (1.0 = 96dpi, 1.25 = 120dpi, etc.)
 
+	float GetWindowDpiScale() const;
+	void ApplyDpiScale(float dpiScale);
+	void RebuildFonts();
 	void SetupStyle();
 };

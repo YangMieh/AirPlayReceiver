@@ -161,9 +161,9 @@ const char *eventStrings[] = { "playing", "paused", "loading", "stopped" };
 "<key>deviceid</key>\r\n"\
 "<string>%s</string>\r\n"\
 "<key>features</key>\r\n"\
-"<integer>119</integer>\r\n"\
+"<integer>%u</integer>\r\n"\
 "<key>model</key>\r\n"\
-"<string>Kodi,1</string>\r\n"\
+"<string>" GLOBAL_MODEL "</string>\r\n"\
 "<key>protovers</key>\r\n"\
 "<string>1.0</string>\r\n"\
 "<key>srcvers</key>\r\n"\
@@ -300,10 +300,9 @@ conn_request(void *ptr, http_request_t *request, http_response_t **response)
 	logger_log(conn->airplay->logger, LOGGER_DEBUG, "[AirPlay] Handling request %s with URL %s", method, url);
 
 	{
-		const char *data;
-		int len;
-		data = http_request_get_data(request, &len);
-		logger_log(conn->airplay->logger, LOGGER_DEBUG, "data len %d:%s\n", len, data);
+		int len = 0;
+		http_request_get_data(request, &len);
+		logger_log(conn->airplay->logger, LOGGER_DEBUG, "data len %d", len);
 	}
 
 	airplay_handler_t handler = NULL;
